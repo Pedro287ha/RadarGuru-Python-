@@ -1,8 +1,12 @@
 import gpsd
 from time import sleep
 import os 
+import renderizar_frame as frame
+import threading
 
 VELOCIDADE_LIMITE = 95
+TEMPO_DELAY = 0.2
+
 
 def checarVelocidade(velocidade) -> None:
     #velocidade = int(velocidade)
@@ -25,21 +29,24 @@ try:
         # == 1 NO FIX
         # == 2 2D FIX
         # >= 3 3D FIX
-        
         if modo_gps >= 2:
             
             mapa_url = dados_gps.map_url()
             latitude = dados_gps.lat
             longitude = dados_gps.lon
-            velocidade_em_kmp = round(dados_gps.hspeed * 3.6)
+            # Convertendo velocidade de metros por segundo para kmp/h
+            velocidade_kmp = round(dados_gps.hspeed * 3.6)
             
             #print(mapa_url)
-            print(f"{velocidade_em_kmp} KM/h")
-            
+            print(f"{velocidade_kmp} KM/h")
+            threading.Thread(target=frame.mostrar_velocidade,args=(velocidade_kmp,)).start() 
             print(latitude,longitude)
+            TEMPO_DELAY = 0.2
         else:
-            print("Piscar....")
-        sleep(1)
+            TEMPO_DELAY = 1
+            threading.Thread(target=frame.sem_sinal_gps, daemon=False).start()
+            
+        sleep(TEMPO_DELAY)
         
 except ConnectionRefusedError:    
     print("Conexao falhou... servidor local possivelmente fechado!")
